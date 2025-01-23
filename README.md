@@ -1,2 +1,2 @@
 # AdminEX-V1
-Roblox Exploit - AdminEX
+Unleash chaos with AdminEX, Or just play around idc
