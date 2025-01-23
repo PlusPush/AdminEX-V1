@@ -1,0 +1,119 @@
+-- Create GUI Elements
+local gui = Instance.new("ScreenGui")
+gui.Name = "AdminEXGui"
+gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Name = "MainFrame"
+frame.Size = UDim2.new(0, 300, 0, 200) -- Width: 300px, Height: 200px
+frame.Position = UDim2.new(0.5, -150, 0.5, -100) -- Centered
+frame.AnchorPoint = Vector2.new(0.5, 0.5)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Black background
+frame.BackgroundTransparency = 0.2 -- Slight transparency
+frame.Parent = gui
+
+-- Add Red Outline
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(255, 0, 0) -- Red
+stroke.Thickness = 3
+stroke.Parent = frame
+
+-- Add Rounded Corners
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10) -- Adjust roundness here
+corner.Parent = frame
+
+-- Add "AdminEX" Text
+local textLabel = Instance.new("TextLabel")
+textLabel.Size = UDim2.new(1, 0, 0, 30) -- Fit top of the Frame
+textLabel.Position = UDim2.new(0, 0, 0, 0)
+textLabel.BackgroundTransparency = 1
+textLabel.Text = "AdminEX"
+textLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+textLabel.Font = Enum.Font.GothamBold
+textLabel.TextSize = 18
+textLabel.Parent = frame
+
+-- Add Buttons
+local buttonNames = {"Fly", "Speed", "Teleport", "Invisibility"}
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local camera = workspace.CurrentCamera
+
+for i, name in ipairs(buttonNames) do
+    local button = Instance.new("TextButton")
+    button.Name = name .. "Button"
+    button.Size = UDim2.new(0.8, 0, 0, 30) -- Buttons are 80% width of the frame, height 30px
+    button.Position = UDim2.new(0.1, 0, 0, 35 * i) -- Positioned with some spacing
+    button.BackgroundColor3 = Color3.fromRGB(30, 30, 30) -- Dark background
+    button.TextColor3 = Color3.fromRGB(255, 255, 255) -- White text
+    button.Text = name
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 14
+    button.Parent = frame
+
+    -- Add Rounded Corners to Buttons
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 5)
+    buttonCorner.Parent = button
+
+    -- Add Button Click Functionality
+    button.MouseButton1Click:Connect(function()
+        if name == "Fly" then
+            humanoid:ChangeState(Enum.HumanoidStateType.Physics) -- Enable free movement
+            character.HumanoidRootPart.Velocity = Vector3.new(0, 50, 0) -- Launch up
+        elseif name == "Speed" then
+            humanoid.WalkSpeed = 100 -- Increase walking speed
+        elseif name == "Teleport" then
+            character:SetPrimaryPartCFrame(CFrame.new(0, 100, 0)) -- Teleport to a new position
+        elseif name == "Invisibility" then
+            -- Move the player underground
+            local undergroundPosition = character.HumanoidRootPart.Position - Vector3.new(0, 50, 0)
+            character:SetPrimaryPartCFrame(CFrame.new(undergroundPosition))
+            
+            -- Keep the camera above ground
+            local originalFocus = character.HumanoidRootPart.Position
+            camera.CameraType = Enum.CameraType.Scriptable
+            camera.CFrame = CFrame.new(originalFocus + Vector3.new(0, 5, 0)) -- Slightly above ground
+            wait(10) -- Time to stay invisible
+            camera.CameraType = Enum.CameraType.Custom -- Restore default camera behavior
+        end
+    end)
+end
+
+-- Draggable Functionality
+local UserInputService = game:GetService("UserInputService")
+local dragging, dragStart, startPos
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
